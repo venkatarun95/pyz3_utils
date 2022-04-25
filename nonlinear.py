@@ -1,4 +1,4 @@
-from my_solver import MySolver
+from .my_solver import MySolver
 from typing import List, Optional, Tuple, Union
 import z3
 from z3 import And, ArithRef, BoolRef, If, Implies, Not, Sum

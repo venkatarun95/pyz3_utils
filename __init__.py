@@ -1,3 +1,3 @@
 from .my_solver import MySolver, extract_vars
-from .utils import model_to_dict
+from .cache import ModelDict, QueryResult, Variables, fill_obj_from_dict, model_to_dict, run_query
 from .nonlinear import Piecewise
