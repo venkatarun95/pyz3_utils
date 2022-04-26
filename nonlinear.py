@@ -29,25 +29,28 @@ class Piecewise:
         Piecewise.id += 1
         # We may create multiple aux variables distinguished by this
         self.aux_id = 0
+        self.val_def = None
 
     def val(self) -> ArithRef:
-        aux = self.s.Real(f"aux_piecewise_{self.id},{self.aux_id}")
-        self.aux_id += 1
-        for (c, v) in self.vals:
-            self.s.add(Implies(c, aux == v))
-        return aux
-
-    def __mul__(self, other: Union[ArithRef, float, int]) -> ArithRef:
         if self.val_def is not None:
             return self.val_def
-        self.val_def = self.s.Real(f"aux_piecewise_{self.id},{self.aux_id}")
-        self.aux_id += 1
+        self.val_def = self.s.Real(f"auxPiecewiseVal_{self.id}")
         for (c, v) in self.vals:
-            self.s.add(Implies(c, self.val_def == v * other))
+            self.s.add(Implies(c, self.val_def == v))
         return self.val_def
 
+    def __mul__(self, other: Union[ArithRef, float, int]) -> ArithRef:
+        if isinstance(other, float) or isinstance(other, int):
+            return self.val() * other
+
+        aux = self.s.Real(f"auxPiecewiseMul_{self.id},{self.aux_id}")
+        self.aux_id += 1
+        for (c, v) in self.vals:
+            self.s.add(Implies(c, aux == v * other))
+        return aux
+
     def __add__(self, other: Union[ArithRef, float, int]) -> ArithRef:
-        aux = self.s.Real(f"aux_piecewise_{self.id},{self.aux_id}")
+        aux = self.s.Real(f"auxPiecewiseAdd_{self.id},{self.aux_id}")
         self.aux_id += 1
         for (c, v) in self.vals:
             self.s.add(Implies(c, aux == v + other))
@@ -62,7 +65,7 @@ class Piecewise:
         if s is None:
             s = MySolver()
 
-        num_sat = Sum(*[If(c, 1, 0) for (c, _) in self.vals])
+        num_sat = sum([If(c, 1, 0) for (c, _) in self.vals])
         s.add(num_sat != 1)
         s.check()
         satisfiable = s.check()
