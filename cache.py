@@ -28,8 +28,8 @@ class QueryResult:
         satisfiable: str,
         model: Optional[Dict[str, Union[float, bool]]],
         timeout: Optional[float],
-        cfg,
-        v
+        c,
+        v: Variables
     ):
         ''' Arguments:
         satisfiable - one of 'sat', 'unsat', 'unknown'
@@ -42,7 +42,7 @@ class QueryResult:
         self.satisfiable = satisfiable
         self.model = model
         self.timeout = timeout
-        self.cfg = cfg
+        self.c = c
         self.v = v
 
 
@@ -94,14 +94,14 @@ def fill_obj_from_dict(v, m: ModelDict):
 
 
 # Run the query in z3
-def run(queue, assertion_list, track_unsat, cfg):
+def run(queue, assertion_list, track_unsat, c):
     s = Solver()
     s.set(unsat_core=track_unsat)
     for (i, e) in enumerate(assertion_list):
         e = parse_smt2_string(e)[0]
         s.assert_and_track(e, f"{str(e)} :{i}")
     satisfiable = s.check()
-    if cfg.unsat_core and str(satisfiable) == "unsat":
+    if c.unsat_core and str(satisfiable) == "unsat":
         print(s.unsat_core())
     queue.put(str(satisfiable))
     if str(satisfiable) == "sat":
@@ -112,7 +112,7 @@ def run(queue, assertion_list, track_unsat, cfg):
 
 
 def run_query(
-    cfg,
+    c,
     s: MySolver,
     v,
     timeout: float = 10,
@@ -125,8 +125,8 @@ def run_query(
     '''
 
     # Add unsat_core to cfg if not already present
-    if not hasattr(cfg, "unsat_core"):
-        cfg.unsat_core = False
+    if not hasattr(c, "unsat_core"):
+        c.unsat_core = False
 
     # We also add cfg.simplify to the hash because simplification changes the
     # SMT output, and we don't want the caching mechanism to rely on the
@@ -136,7 +136,7 @@ def run_query(
     ).digest().hex()[:16]
     fname = dir + "/" + s_hash + ".cached"
     print(f"Cache file name: {fname}")
-    if not cfg.unsat_core and os.path.exists(fname):
+    if not c.unsat_core and os.path.exists(fname):
         # Read cached
         try:
             f = open(fname, 'rb')
@@ -162,7 +162,7 @@ def run_query(
         return s.to_smt2()
     assertion_list = [to_smt2(e) for e in s.assertion_list]
     proc = mp.Process(target=run,
-                      args=(queue, assertion_list, s.track_unsat, cfg))
+                      args=(queue, assertion_list, s.track_unsat, c))
     proc.start()
     proc.join(timeout)
     timed_out: bool = False
@@ -178,9 +178,9 @@ def run_query(
             v = fill_obj_from_dict(v, model)
         else:
             v = None
-        res = QueryResult(satisfiable, model, None, cfg, v)
+        res = QueryResult(satisfiable, model, None, c, v)
     else:
-        res = QueryResult("unknown", None, timeout, cfg, None)
+        res = QueryResult("unknown", None, timeout, c, None)
 
     proc.close()
 

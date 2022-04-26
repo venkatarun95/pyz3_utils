@@ -21,17 +21,6 @@ def extract_vars(e: BoolRef) -> List[str]:
 
 class MySolver:
     '''A thin wrapper over z3.Solver'''
-    s: Solver
-    num_constraints: int
-    variables: Set[str]
-    track_unsat: bool
-    # The python z3 interface is weird. Hence when unsat_core is true, and we
-    # need to send assertions over a queue in cache.py, we need to do the job
-    # ourselves
-    assertion_list: List[Any]
-    # Warn if a variable being used hasn't been declared. Can be set from the
-    # outside
-    warn_undeclared: bool = True
 
     def __init__(self):
         self.s = Solver()
@@ -39,6 +28,7 @@ class MySolver:
         self.variables = {"False", "True"}
         self.track_unsat = False
         self.assertion_list = []
+        self.warn_undeclared = True
 
     def add(self, expr):
         for var in extract_vars(expr):
