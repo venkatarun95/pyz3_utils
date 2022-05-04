@@ -12,7 +12,7 @@ import hashlib
 import multiprocessing as mp
 import os
 import pickle as pkl
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 import z3
 from z3 import Solver, parse_smt2_string
 
@@ -78,6 +78,8 @@ def fill_obj_from_dict(v, m: ModelDict):
 
     if str(v) in m:
         return m[str(v)]
+    if isinstance(v, List):
+        return [fill_obj_from_dict(e, m) for e in v]
     if not isinstance(v, Variables):
         return None
 
