@@ -46,7 +46,7 @@ class QueryResult:
         self.v = v
 
 
-ModelDict = Dict[str, Union[Fraction, bool]]
+ModelDict = Dict[str, Union[Fraction, bool, int]]
 
 
 def model_to_dict(model: z3.ModelRef) -> ModelDict:
@@ -59,7 +59,7 @@ def model_to_dict(model: z3.ModelRef) -> ModelDict:
         if type(val) == z3.BoolRef:
             res[d.name()] = bool(val)
         elif type(val) == z3.IntNumRef:
-            res[d.name()] = Fraction(val.as_long())
+            res[d.name()] = val.as_long()
         elif type(val) == z3.RatNumRef:
             res[d.name()] = val.as_fraction()
         else:

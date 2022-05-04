@@ -56,6 +56,12 @@ class MySolver:
     def model(self):
         return self.s.model()
 
+    def push(self):
+        self.s.push()
+
+    def pop(self):
+        self.s.pop()
+
     def unsat_core(self):
         assert(self.track_unsat)
         return self.s.unsat_core()
