@@ -76,17 +76,25 @@ class MySolver:
         return self.s.assertions()
 
     def Real(self, name: str):
+        if name in self.variables:
+            print(f"Warning: {name} declared previously.")
         self.variables.add(name)
         return Real(name)
 
     def Function(self, name: str, t1, t2):
+        if name in self.variables:
+            print(f"Warning: {name} declared previously.")
         self.variables.add(name)
         return Function(name, t1, t2)
 
     def Int(self, name: str):
+        if name in self.variables:
+            print(f"Warning: {name} declared previously.")
         self.variables.add(name)
         return Int(name)
 
     def Bool(self, name: str):
+        if name in self.variables:
+            print(f"Warning: {name} declared previously.")
         self.variables.add(name)
         return Bool(name)
