@@ -1,6 +1,4 @@
-from typing import Callable, List, Optional, Tuple
-
-from .my_solver import MySolver
+from typing import List, Optional, Tuple
 
 
 def sat_to_val(sat, reverse: bool = False):
