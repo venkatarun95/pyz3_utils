@@ -1,23 +1,26 @@
 ''' Produce solutions with small denominators '''
 
 from fractions import Fraction
+import logging
 import math
-from typing import Optional
-from z3 import If, Or, Real
+from typing import Optional, Tuple
+from z3 import If, Or, Real, CheckSatResult
 
 from .binary_search import BinarySearch
 from .cache import ModelDict, model_to_dict
 from .my_solver import MySolver
 
-def find_small_denom_soln(s: MySolver, max_denom: int) -> Optional[ModelDict]:
+logger = logging.getLogger('pyz3_utils')
+
+
+def _find_small_denom_soln(s: MySolver, max_denom: int) -> Tuple[CheckSatResult, Optional[ModelDict]]:
     '''Find a solution that tries to maximize the number of variables that have a
     demoninator smaller than `max_denom`
-
     '''
-
-    sat = str(s.check())
-    if sat != "sat":
-        return None
+    ctx = s.ctx
+    orig_sat = s.check()
+    if str(orig_sat) != "sat":
+        return orig_sat, None
 
     m = model_to_dict(s.model())
 
@@ -31,6 +34,7 @@ def find_small_denom_soln(s: MySolver, max_denom: int) -> Optional[ModelDict]:
     for vname in m:
         if type(m[vname]) is Fraction:
             val = m[vname]
+            assert isinstance(val, Fraction)
             if val.denominator > max_denom:
                 # Fractions just above and below the value
                 num = math.ceil(Fraction(val.numerator * max_denom,
@@ -40,12 +44,12 @@ def find_small_denom_soln(s: MySolver, max_denom: int) -> Optional[ModelDict]:
                 assert lo < val and val < hi, f"Error in computing hi={hi} and lo={lo} for {val}"
 
                 s.add(Or(
-                    Real(vname) == val, Real(vname) == lo, Real(vname) == hi))
+                    Real(vname, ctx) == val, Real(vname, ctx) == lo, Real(vname, ctx) == hi))
 
-                objective += If(Real(vname) == val, 0, 1)
+                objective += If(Real(vname, ctx) == val, 0, 1)
                 max_objective += 1
             else:
-                s.add(Real(vname) == val)
+                s.add(Real(vname, ctx) == val)
                 old_obj += 1
 
 
@@ -82,8 +86,17 @@ def find_small_denom_soln(s: MySolver, max_denom: int) -> Optional[ModelDict]:
     for vname in best_m:
         if type(best_m[vname]) is Fraction:
             val = best_m[vname]
+            assert isinstance(val, Fraction)
             if val.denominator <= max_denom:
                 new_obj += 1
-    print(f"Improved number of small numbers from {old_obj} to {new_obj} out of a max of {old_obj + max_objective}")
+    logger.info(f"Improved number of small numbers from {old_obj} to {new_obj} out of a max of {old_obj + max_objective}")
 
-    return best_m
+    return orig_sat, best_m
+
+
+def find_small_denom_soln(s: MySolver, max_denom: int) -> Tuple[CheckSatResult, Optional[ModelDict]]:
+    s.push()
+    ret = _find_small_denom_soln(s, max_denom)
+    s.pop()
+    s.check()
+    return ret
