@@ -22,21 +22,31 @@ def extract_vars(e: BoolRef) -> List[str]:
 class MySolver:
     '''A thin wrapper over z3.Solver'''
 
-    def __init__(self):
-        self.s = Solver()
+    def __init__(self, ctx=None):
+        self.s = Solver(ctx=ctx)
+        # If ctx=None, we're using the global context. This means that in any
+        # assertions testing equality of ctx, None will get compared to
+        # None. If ctx!=None, we ensure the right context is being used
+        self.ctx = ctx
         self.num_constraints = 0
         self.variables = {"False", "True"}
         self.track_unsat = False
         self.assertion_list = []
         self.warn_undeclared = True
 
-    def add(self, expr):
+    def check_expr(self, expr):
+        if(type(expr) == bool):
+            return True
         for var in extract_vars(expr):
             if not self.warn_undeclared:
                 self.variables.add(var)
             if var not in self.variables:
                 print(f"Warning: {var} in {str(expr)} not previously declared")
-                assert(False)
+                return False
+        return True
+
+    def add(self, expr):
+        assert self.check_expr(expr)
         self.assertion_list.append(expr)
         if self.track_unsat:
             self.s.assert_and_track(expr,
@@ -75,26 +85,33 @@ class MySolver:
     def assertions(self):
         return self.s.assertions()
 
-    def Real(self, name: str):
+    def translate(self, ctx):
+        return self.s.translate(ctx)
+
+    def Real(self, name: str, ctx=None):
+        assert ctx == self.ctx
         if name in self.variables:
             print(f"Warning: {name} declared previously.")
         self.variables.add(name)
-        return Real(name)
+        return Real(name, ctx)
 
     def Function(self, name: str, t1, t2):
         if name in self.variables:
             print(f"Warning: {name} declared previously.")
         self.variables.add(name)
+        # Takes ctx from t1, t2
         return Function(name, t1, t2)
 
-    def Int(self, name: str):
+    def Int(self, name: str, ctx=None):
+        assert ctx == self.ctx
         if name in self.variables:
             print(f"Warning: {name} declared previously.")
         self.variables.add(name)
-        return Int(name)
+        return Int(name, ctx=ctx)
 
-    def Bool(self, name: str):
+    def Bool(self, name: str, ctx=None):
+        assert ctx == self.ctx
         if name in self.variables:
             print(f"Warning: {name} declared previously.")
         self.variables.add(name)
-        return Bool(name)
+        return Bool(name, ctx=ctx)
