@@ -73,7 +73,7 @@ class MySolver:
         self.s.pop()
 
     def unsat_core(self):
-        assert(self.track_unsat)
+        # assert(self.track_unsat)
         return self.s.unsat_core()
 
     def to_smt2(self):
