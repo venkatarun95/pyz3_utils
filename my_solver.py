@@ -86,7 +86,7 @@ class MySolver:
         return self.s.translate(ctx)
 
     def Real(self, name: str, ctx=None):
-        assert ctx == self.ctx
+        assert (ctx is None) or (ctx == self.ctx)
         if name in self.variables:
             print(f"Warning: {name} declared previously.")
         self.variables.add(name)
@@ -100,14 +100,14 @@ class MySolver:
         return Function(name, t1, t2)
 
     def Int(self, name: str, ctx=None):
-        assert ctx == self.ctx
+        assert (ctx is None) or (ctx == self.ctx)
         if name in self.variables:
             print(f"Warning: {name} declared previously.")
         self.variables.add(name)
         return Int(name, ctx=ctx)
 
     def Bool(self, name: str, ctx=None):
-        assert ctx == self.ctx
+        assert (ctx is None) or (ctx == self.ctx)
         if name in self.variables:
             print(f"Warning: {name} declared previously.")
         self.variables.add(name)
