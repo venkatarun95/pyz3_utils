@@ -6,11 +6,14 @@ import math
 from typing import Optional, Tuple
 from z3 import If, Or, Real, CheckSatResult
 
+from pyz3_utils.common import GlobalConfig
+
 from .binary_search import BinarySearch
 from .cache import ModelDict, model_to_dict
 from .my_solver import MySolver
 
 logger = logging.getLogger('pyz3_utils')
+GlobalConfig().default_logger_setup(logger)
 
 
 def _find_small_denom_soln(s: MySolver, max_denom: int) -> Tuple[CheckSatResult, Optional[ModelDict]]:
