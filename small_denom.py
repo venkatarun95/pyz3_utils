@@ -6,10 +6,9 @@ import math
 from typing import Set, Optional, Tuple
 from z3 import CheckSatResult, If, Or, Real, ModelRef
 
-from pyz3_utils.common import GlobalConfig
-
 from .binary_search import BinarySearch
 from .cache import ModelDict, model_to_dict
+from .common import GlobalConfig
 from .my_solver import MySolver
 
 logger = logging.getLogger('pyz3_utils')
