@@ -31,6 +31,30 @@ class Piecewise:
         self.aux_id = 0
         self.val_def = None
 
+    @staticmethod
+    def from_var(var: ArithRef,
+                 breaks: List[float],
+                 range_vals: Union[List[Optional[int]], List[Optional[float]]],
+                 s: MySolver
+                 ):
+        '''Constructs a Piecewise object. E.g. if we were given `breaks=[1, 2, 3]`, it
+        will compare `var` to ranges (-inf, 1), [1, 2), [2, 3), [3, inf) and
+        assign corresponding vals. Length of `range_vals` should be `len(pts) +
+        1`. If a `range_vals` entry is None, it assumes that that range will
+        never occur. Use `verify` to check that this is always the case.
+
+        '''
+        assert len(range_vals) == len(breaks) + 1
+        vals = [(var < breaks[0], range_vals[0])]
+        for i in range(len(breaks)-1):
+            vals += [(And(var >= breaks[i], var < breaks[i+1]),
+                      range_vals[i+1])]
+        vals += [(var >= breaks[-1], range_vals[-1])]
+
+        # Remove all the `None`s
+        vals = [v for v in vals if v[1] is not None]
+        return Piecewise(s, vals)
+
     def val(self) -> ArithRef:
         if self.val_def is not None:
             return self.val_def
@@ -66,9 +90,10 @@ class Piecewise:
             s = MySolver()
 
         num_sat = sum([If(c, 1, 0) for (c, _) in self.vals])
+        s.push()
         s.add(num_sat != 1)
-        s.check()
         satisfiable = s.check()
+        s.pop()
         assert satisfiable != z3.unsat, f"Unable to check that options are mutually exclusive and exhaustive. Got {satisfiable} for {str(self.vals)}"
 
 
