@@ -143,6 +143,7 @@ def run_query(
         try:
             f = open(fname, 'rb')
             res: QueryResult = pkl.load(f)
+            f.close()
             if res.timeout is None:
                 # We got the result last time. Just return it
                 print("Cache hit")
